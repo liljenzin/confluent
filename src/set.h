@@ -205,7 +205,7 @@ struct hash_table {
   static std::unique_ptr<node<Traits>* []> alloc(size_t bucket_count) {
     std::unique_ptr<node<Traits>* []> buckets(new node<Traits>*[bucket_count]);
     std::fill(buckets.get(), buckets.get() + bucket_count, nullptr);
-    return std::move(buckets);
+    return buckets;
   }
 
   size_t pos(node<Traits>* key) const {
@@ -601,7 +601,7 @@ node_ptr<Traits> make_node(const env<Traits>& env,
       break;
     root = set_union(env, std::move(root), std::move(branch));
   }
-  return std::move(root);
+  return root;
 }
 
 template <class Traits, class InputIterator>
