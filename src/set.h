@@ -267,6 +267,8 @@ struct env_base {
 
   ~env_base() { provider_ = saved_provider_; }
 
+  void silence_unused_warning() const {}
+
   static hash_table<Traits>& get_hash_table() { return provider_->hash_table_; }
 
   typename Traits::provider* const saved_provider_;
@@ -337,6 +339,7 @@ struct set_tag {};
 
 template <class Traits>
 void reset(const env<Traits>& env, node_ptr<Traits>* p) {
+  env.silence_unused_warning();
   p->reset();
 }
 
