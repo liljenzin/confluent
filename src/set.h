@@ -203,7 +203,7 @@ struct hash_table {
   }
 
   static std::unique_ptr<node<Traits>* []> alloc(size_t bucket_count) {
-    std::unique_ptr<node<Traits>* []> buckets(new node<Traits>*[bucket_count]);
+    std::unique_ptr<node<Traits>*[]> buckets(new node<Traits>*[bucket_count]);
     std::fill(buckets.get(), buckets.get() + bucket_count, nullptr);
     return buckets;
   }
@@ -214,7 +214,7 @@ struct hash_table {
 
   void extend() {
     bucket_count_ *= 2;
-    std::unique_ptr<node<Traits>* []> new_buckets = alloc(bucket_count_);
+    std::unique_ptr<node<Traits>*[]> new_buckets = alloc(bucket_count_);
     std::fill(new_buckets.get(), new_buckets.get() + bucket_count_, nullptr);
     for (size_t i = 0; i < bucket_count_ / 2; ++i) {
       node<Traits>* head = buckets_[i];
@@ -231,7 +231,7 @@ struct hash_table {
 
   void reduce() {
     bucket_count_ /= 2;
-    std::unique_ptr<node<Traits>* []> new_buckets(
+    std::unique_ptr<node<Traits>*[]> new_buckets(
         new node<Traits>*[bucket_count_]);
     for (size_t i = 0; i < bucket_count_; ++i) {
       node<Traits>* low_head = buckets_[i];
@@ -252,7 +252,7 @@ struct hash_table {
   static constexpr size_t min_bucket_count_ = 1 << 3;
 
   mutable std::mutex mutex_;
-  std::unique_ptr<node<Traits>* []> buckets_;
+  std::unique_ptr<node<Traits>*[]> buckets_;
   size_t bucket_count_;
   size_t size_;
 };
@@ -585,7 +585,9 @@ bool includes(const env<Traits>& env, Rank ranker, Left&& left, Right&& right) {
       return includes(env, ranker, left->left_, right->left_) &&
              includes(env, ranker, left->right_, right->right_);
     }
-    default: { return false; }
+    default: {
+      return false;
+    }
   }
 }
 
@@ -738,10 +740,10 @@ node_ptr<Traits> head(const env<Traits>& env,
   while (*p && last <= size((*p)->left_)) {
     p = &(*p)->left_;
   }
-  return last == size(*p)
-             ? *p
-             : replace_right(env, *p, head(env, &(*p)->right_,
-                                           last - size((*p)->left_) - 1));
+  return last == size(*p) ? *p
+                          : replace_right(env, *p,
+                                          head(env, &(*p)->right_,
+                                               last - size((*p)->left_) - 1));
 }
 
 template <class T, class Compare, class Hash, class Equal>
