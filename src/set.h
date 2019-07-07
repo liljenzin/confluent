@@ -279,7 +279,7 @@ struct env_base {
 template <class Traits>
 thread_local typename Traits::provider* env_base<Traits>::provider_;
 
-enum ranking { LEFT = -1, SAME = 0, RIGHT = 1, NOT_SAME };
+enum class ranking { LEFT = -1, SAME = 0, RIGHT = 1, NOT_SAME };
 
 template <class Traits>
 size_t hash(const node<Traits>* p) {
@@ -375,14 +375,14 @@ ranking rank(const env<Traits>& env,
              const node<Traits>& left,
              const node<Traits>& right) {
   if (left.priority() < right.priority())
-    return LEFT;
+    return ranking::LEFT;
   if (right.priority() < left.priority())
-    return RIGHT;
+    return ranking::RIGHT;
   if (env.compare(left.key(), right.key()))
-    return LEFT;
+    return ranking::LEFT;
   if (env.compare(right.key(), left.key()))
-    return RIGHT;
-  return SAME;
+    return ranking::RIGHT;
+  return ranking::SAME;
 }
 
 template <class Traits, class Parent, class Child>
@@ -410,10 +410,10 @@ node_ptr<Traits> join(const env<Traits>& env, Left&& left, Right&& right) {
   if (!right)
     return std::forward<Left>(left);
   switch (rank(env, *left, *right)) {
-    case LEFT:
+    case ranking::LEFT:
       return replace_right(env, left,
                            join(env, left->right_, std::forward<Right>(right)));
-    case RIGHT:
+    case ranking::RIGHT:
       return replace_left(env, right,
                           join(env, std::forward<Left>(left), right->left_));
 
@@ -449,13 +449,13 @@ node_ptr<Traits> set_union(const env<Traits>& env, Left&& left, Right&& right) {
   if (!left)
     return std::forward<Right>(right);
   switch (rank(env, *left, *right)) {
-    case LEFT: {
+    case ranking::LEFT: {
       auto s = split(env, std::forward<Right>(right), left->key());
       return make_node(env, *left,
                        set_union(env, left->left_, std::move(s.first)),
                        set_union(env, left->right_, std::move(s.second)));
     }
-    case RIGHT: {
+    case ranking::RIGHT: {
       auto s = split(env, std::forward<Left>(left), right->key());
       return make_node(env, *right,
                        set_union(env, std::move(s.first), right->left_),
@@ -478,19 +478,19 @@ node_ptr<Traits> set_intersection(const env<Traits>& env,
   if (left == right)
     return std::forward<Left>(left);
   switch (ranker(env, *left, *right)) {
-    case LEFT: {
+    case ranking::LEFT: {
       auto s = split(env, std::forward<Right>(right), left->key());
       return join(
           env, set_intersection(env, ranker, left->left_, std::move(s.first)),
           set_intersection(env, ranker, left->right_, std::move(s.second)));
     }
-    case RIGHT: {
+    case ranking::RIGHT: {
       auto s = split(env, std::forward<Left>(left), right->key());
       return join(
           env, set_intersection(env, ranker, std::move(s.first), right->left_),
           set_intersection(env, ranker, std::move(s.second), right->right_));
     }
-    case NOT_SAME: {
+    case ranking::NOT_SAME: {
       return join(env, set_intersection(env, ranker, left->left_, right->left_),
                   set_intersection(env, ranker, left->right_, right->right_));
     }
@@ -512,20 +512,20 @@ node_ptr<Traits> set_difference(const env<Traits>& env,
   if (!right)
     return std::forward<Left>(left);
   switch (ranker(env, *left, *right)) {
-    case LEFT: {
+    case ranking::LEFT: {
       auto s = split(env, std::forward<Right>(right), left->key());
       return make_node(
           env, *left,
           set_difference(env, ranker, left->left_, std::move(s.first)),
           set_difference(env, ranker, left->right_, std::move(s.second)));
     }
-    case RIGHT: {
+    case ranking::RIGHT: {
       auto s = split(env, std::forward<Left>(left), right->key());
       return join(
           env, set_difference(env, ranker, std::move(s.first), right->left_),
           set_difference(env, ranker, std::move(s.second), right->right_));
     }
-    case NOT_SAME: {
+    case ranking::NOT_SAME: {
       return make_node(
           env, *left, set_difference(env, ranker, left->left_, right->left_),
           set_difference(env, ranker, left->right_, right->right_));
@@ -548,13 +548,13 @@ node_ptr<Traits> set_symmetric(const env<Traits>& env,
   if (left == right)
     return nullptr;
   switch (rank(env, *left, *right)) {
-    case LEFT: {
+    case ranking::LEFT: {
       auto s = split(env, std::forward<Right>(right), left->key());
       return make_node(env, *left,
                        set_symmetric(env, left->left_, std::move(s.first)),
                        set_symmetric(env, left->right_, std::move(s.second)));
     }
-    case RIGHT: {
+    case ranking::RIGHT: {
       auto s = split(env, std::forward<Left>(left), right->key());
       return make_node(env, *right,
                        set_symmetric(env, std::move(s.first), right->left_),
@@ -576,12 +576,12 @@ bool includes(const env<Traits>& env, Rank ranker, Left&& left, Right&& right) {
     return false;
 
   switch (ranker(env, *left, *right)) {
-    case LEFT: {
+    case ranking::LEFT: {
       auto s = split(env, std::forward<Right>(right), left->key());
       return includes(env, ranker, left->left_, std::move(s.first)) &&
              includes(env, ranker, left->right_, std::move(s.second));
     }
-    case SAME: {
+    case ranking::SAME: {
       return includes(env, ranker, left->left_, right->left_) &&
              includes(env, ranker, left->right_, right->right_);
     }

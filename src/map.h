@@ -82,12 +82,12 @@ node_ptr<Traits> set_intersection(const env<Traits>& env,
   if (left->key_node() == right)
     return std::forward<Left>(left);
   switch (rank(env.key_set_env_, *left->key_node(), *right)) {
-    case LEFT: {
+    case ranking::LEFT: {
       auto s = split(env.key_set_env_, std::forward<Right>(right), left->key());
       return join(env, set_intersection(env, left->left_, std::move(s.first)),
                   set_intersection(env, left->right_, std::move(s.second)));
     }
-    case RIGHT: {
+    case ranking::RIGHT: {
       auto s = split(env, std::forward<Left>(left), right->key());
       return join(env, set_intersection(env, std::move(s.first), right->left_),
                   set_intersection(env, std::move(s.second), right->right_));
@@ -109,13 +109,13 @@ node_ptr<Traits> set_difference(const env<Traits>& env,
   if (!right)
     return std::forward<Left>(left);
   switch (rank(env.key_set_env_, *left->key_node(), *right)) {
-    case LEFT: {
+    case ranking::LEFT: {
       auto s = split(env.key_set_env_, std::forward<Right>(right), left->key());
       return make_node(env, *left,
                        set_difference(env, left->left_, std::move(s.first)),
                        set_difference(env, left->right_, std::move(s.second)));
     }
-    case RIGHT: {
+    case ranking::RIGHT: {
       auto s = split(env, std::forward<Left>(left), right->key());
       return join(env, set_difference(env, std::move(s.first), right->left_),
                   set_difference(env, std::move(s.second), right->right_));
