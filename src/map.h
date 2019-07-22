@@ -148,19 +148,28 @@ size_t intersect(const env<Traits>& env, node_ptr<Traits>* p, NodePtr&& q) {
   return n - size(*p);
 }
 
+template <class Traits, class NodePtr>
+bool insert_or_assign(const env<Traits>& env,
+                      node_ptr<Traits>* p,
+                      NodePtr&& q) {
+  node_ptr<Traits> r = set_union(env, std::forward<NodePtr>(q), *p);
+  p->swap(r);
+  return *p != r;
+}
+
 template <class Traits>
-size_t insert_or_assign(const env<Traits>& env,
-                        node_ptr<Traits>* p,
-                        const typename Traits::value_type& value) {
-  return update(env, p, make_node(env, value));
+bool insert_or_assign(const env<Traits>& env,
+                      node_ptr<Traits>* p,
+                      const typename Traits::value_type& value) {
+  return insert_or_assign(env, p, make_node(env, value));
 }
 
 template <class Traits, class InputIterator>
-size_t insert_or_assign(const env<Traits>& env,
-                        node_ptr<Traits>* p,
-                        InputIterator first,
-                        InputIterator last) {
-  return update(env, p, make_node(env, first, last));
+bool insert_or_assign(const env<Traits>& env,
+                      node_ptr<Traits>* p,
+                      InputIterator first,
+                      InputIterator last) {
+  return insert_or_assign(env, p, make_node(env, first, last));
 }
 
 template <class Key,
@@ -587,11 +596,11 @@ class map {
    * key.
    *
    * @param value element to insert
-   * @return the number of inserted elements
+   * @return true if the set was updated, false otherwise
    *
    * Complexity: O(log n) expected time and memory.
    **/
-  size_t insert_or_assign(const value_type& value) {
+  bool insert_or_assign(const value_type& value) {
     return internal::insert_or_assign(env(), &node_, value);
   }
 
@@ -603,13 +612,13 @@ class map {
    *
    * @param first range start
    * @param last range end
-   * @return the number of inserted elements
+   * @return true if the set was updated, false otherwise
    *
    * Complexity: Same cost as first creating a map from the given range and
    *     then inserting the created map into this map.
    **/
   template <class InputIterator>
-  size_t insert_or_assign(InputIterator first, InputIterator last) {
+  bool insert_or_assign(InputIterator first, InputIterator last) {
     return internal::insert_or_assign(env(), &node_, first, last);
   }
 
@@ -620,12 +629,12 @@ class map {
    * keys.
    *
    * @param ilist the list of elements to insert
-   * @return the number of inserted elements
+   * @return true if the set was updated, false otherwise
    *
    * Complexity: Same cost as first creating a map from the given
    *     initializer_list and then inserting the created map into this map.
    **/
-  size_t insert_or_assign(std::initializer_list<value_type> ilist) {
+  bool insert_or_assign(std::initializer_list<value_type> ilist) {
     return internal::insert_or_assign(env(), &node_, ilist.begin(),
                                       ilist.end());
   }
@@ -639,7 +648,7 @@ class map {
    * Result is undefined if not both maps are using the same map_provider.
    *
    * @param other other map to insert elements from
-   * @return the number of inserted elements
+   * @return true if the set was updated, false otherwise
    *
    * Let n be the size of the larger map.
    * Let m be the size of the smaller map.
@@ -647,9 +656,9 @@ class map {
    *
    * Complexity: O(min(m * log(n/m), d * log(n/d))) expected time and memory.
    **/
-  size_t insert_or_assign(const map& other) {
+  bool insert_or_assign(const map& other) {
     check(other);
-    return internal::update(env(), &node_, other.node_);
+    return internal::insert_or_assign(env(), &node_, other.node_);
   }
 
   /**
