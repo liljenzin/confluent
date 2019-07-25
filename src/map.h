@@ -149,9 +149,9 @@ size_t intersect(const env<Traits>& env, node_ptr<Traits>* p, NodePtr&& q) {
 }
 
 template <class Traits, class NodePtr>
-bool insert_or_assign(const env<Traits>& env,
-                      node_ptr<Traits>* p,
-                      NodePtr&& q) {
+bool insert_or_assign_n(const env<Traits>& env,
+                        node_ptr<Traits>* p,
+                        NodePtr&& q) {
   node_ptr<Traits> r = set_union(env, std::forward<NodePtr>(q), *p);
   p->swap(r);
   return *p != r;
@@ -161,7 +161,7 @@ template <class Traits>
 bool insert_or_assign(const env<Traits>& env,
                       node_ptr<Traits>* p,
                       const typename Traits::value_type& value) {
-  return insert_or_assign(env, p, make_node(env, value));
+  return insert_or_assign_n(env, p, make_node(env, value));
 }
 
 template <class Traits, class InputIterator>
@@ -169,7 +169,7 @@ bool insert_or_assign(const env<Traits>& env,
                       node_ptr<Traits>* p,
                       InputIterator first,
                       InputIterator last) {
-  return insert_or_assign(env, p, make_node(env, first, last));
+  return insert_or_assign_n(env, p, make_node(env, first, last));
 }
 
 template <class Key,
@@ -658,7 +658,7 @@ class map {
    **/
   bool insert_or_assign(const map& other) {
     check(other);
-    return internal::insert_or_assign(env(), &node_, other.node_);
+    return internal::insert_or_assign_n(env(), &node_, other.node_);
   }
 
   /**
